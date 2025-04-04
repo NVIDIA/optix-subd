@@ -1,0 +1,9 @@
+
+#pragma once
+
+static constexpr char const build_date[] = "@PROJECT_TIMESTAMP@";
+
+static constexpr char const git_branch[] = "@PROJECT_SOURCE_BRANCH@";
+static constexpr char const git_commit[] = "@PROJECT_SOURCE_REVISION@";
+
+

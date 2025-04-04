@@ -1,0 +1,3 @@
+[submodule "extern/osd_lite"]
+	path = extern/osd_lite
+	url = https://github.com/NVIDIA-RTX/OSD-Lite
