@@ -132,11 +132,23 @@ if ( NOT MSVC )
     find_package( TBB QUIET )
 endif()
 
-# OTK, including OptiX, glfw, glad
+# OTK, including OptiX, glfw, etc
 
 if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
+
+# workaround: use locally generated glad headers to avoid connection problems
+add_library( glad SHARED
+  extern/KHR/khrplatform.h
+  extern/glad/glad.c
+  extern/glad/glad.h
+)
+target_compile_definitions( glad
+  PRIVATE GLAD_GLAPI_EXPORT_BUILD
+  PUBLIC  GLAD_GLAPI_EXPORT )
+target_include_directories( glad PUBLIC extern )
+add_library(glad::glad ALIAS glad)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/optix-toolkit EXCLUDE_FROM_ALL)
 
@@ -247,7 +259,7 @@ target_link_libraries( optixSubd
   OptiXToolkit::Util
   OptiXToolkit::ShaderUtil
   glfw
-  glad::glad
+  glad
   imgui
   implot
   jsoncpp_static
@@ -297,7 +309,6 @@ endforeach()
 
 set_target_properties(glfw                PROPERTIES FOLDER "external/GLFW3")
 set_target_properties(glad                PROPERTIES FOLDER "external/glad")
-set_target_properties(glad-generate-files PROPERTIES FOLDER "external/glad")
 set_target_properties(imgui               PROPERTIES FOLDER "external/imgui")
 set_target_properties(implot              PROPERTIES FOLDER "external/implot")
 set_target_properties(jsoncpp_static      PROPERTIES FOLDER "external/jsoncpp")
