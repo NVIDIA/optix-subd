@@ -202,6 +202,7 @@ struct SubdCUDA
     std::span<int>                               control_point_indices;
     PatchPointsCUDA<PATCH_PT_T>                  patch_points;
     SubdLinearCUDA<TexCoord, TexCoordLimitFrame> texcoord_subd;
+    std::span<uint16_t>                          material_bindings;
 
     static constexpr int isolation_level = 6;
 
@@ -216,6 +217,7 @@ struct SubdCUDA
                          subd.d_texcoords.span(),
                          subd.m_texcoordDeviceData.control_point_indices.span(),
                          { subd.m_texcoordDeviceData.patch_points.span(), subd.m_texcoordDeviceData.patch_points_offsets.span() } }
+        , material_bindings{ subd.d_materialBindings.span() }
     { ; }
 
     __host__ __device__ uint32_t number_of_surfaces() const { return surface_descriptors.size(); }
@@ -490,6 +492,9 @@ struct SubdCUDA
 
     __device__ uint16_t materialId(uint32_t i_surface) const
     {
+        if ( !material_bindings.empty() ) 
+            return this->material_bindings[i_surface];
+
         return 0;
     }
 };
@@ -504,7 +509,6 @@ struct DisplacedSubdCUDA: SubdCUDA<CONTROL_PT_T, PATCH_PT_T>
     const float global_displacement_filter_mip_bias = 0.0f;
 
     const MaterialCuda* materials = nullptr;
-    std::span<uint16_t> material_bindings;
 
     __host__ DisplacedSubdCUDA( const SubdivisionSurface& subd, float dispScale, float dispBias, float dispFilterScale, float dispFilterBias, const MaterialCuda* materials )
         : SubdCUDA<CONTROL_PT_T, PATCH_PT_T>( subd )
@@ -513,7 +517,6 @@ struct DisplacedSubdCUDA: SubdCUDA<CONTROL_PT_T, PATCH_PT_T>
         , global_displacement_filter_scale{ dispFilterScale }
         , global_displacement_filter_mip_bias{ dispFilterBias }
         , materials{ materials }
-        , material_bindings{ subd.d_materialBindings.span() }
     { ; }
 
     __device__ LimitFrame displace( const LimitFrame&             limit,
@@ -586,15 +589,12 @@ struct DisplacedSubdCUDA: SubdCUDA<CONTROL_PT_T, PATCH_PT_T>
             limits[iLane] = limit;
         }
     }
-
-    __device__ uint16_t materialId(uint32_t i_surface) const
-    {
-        return this->material_bindings[i_surface];
-    }
+    
 
     __device__ DisplacementSampler displacementSampler(uint32_t i_surface) const
     {
-        auto id = materialId( i_surface );
+        assert( materials );
+        const uint16_t id = SubdCUDA<CONTROL_PT_T, PATCH_PT_T>::materialId( i_surface );
         const MaterialCuda& material = materials[id];
         return material.displacementSampler;
     }

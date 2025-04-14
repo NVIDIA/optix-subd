@@ -813,7 +813,7 @@ void OptixSubdGUI::buildUI_help( int2 window_size, bool* display_help_window )
             ImGui::TableSetupColumn( "Function", ImGuiTableColumnFlags_WidthFixed, 300 );
             ImGui::TableHeadersRow();
 
-            buildRow( "Ctrl + Q", "exit the application" );
+            buildRow( "Ctrl + Q / ESC", "exit the application" );
 
             buildRow( "~", "toggle UI" );
             buildRow( "`", "toggle overlay" );
