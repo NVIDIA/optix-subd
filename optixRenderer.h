@@ -100,6 +100,9 @@ public:
     void setWireframe(bool wireframe);
     bool getWireframe() const { return m_params.bound.enableWireframe; }
 
+    void setSurfaceWireframe(bool wireframe);
+    bool getSurfaceWireframe() const { return m_params.bound.enableSurfaceWireframe; }
+
     void setDisplayChannel( GBuffer::Channel channel );
     GBuffer::Channel getDisplayChannel() const { return m_displayChannel; }
 

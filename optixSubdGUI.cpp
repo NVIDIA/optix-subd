@@ -521,19 +521,24 @@ void OptixSubdGUI::buildUI_internal( int2 window_size )
             ImGui::SetTooltip("Display tessellated triangle wireframe");
         ImGui::SameLine();
 
+        bool surfaceWireframe = renderer.getSurfaceWireframe();
+        if( ImGui::Checkbox( "Surface Edges", &surfaceWireframe ) )
+        {
+            renderer.setSurfaceWireframe( surfaceWireframe );
+        }
+        if (ImGui::IsItemHovered() && m_imgui->HoveredIdTimer > .5f)
+            ImGui::SetTooltip("Display limit surface patch wireframe");
+        ImGui::SameLine();
+
         bool wireframeGL = m_app.getGLWireframeEnabled();
         if( ImGui::Checkbox( "Subd Cage", &wireframeGL ) )
         {
             m_app.setGLWireframeEnabled( wireframeGL );
         }
         if (ImGui::IsItemHovered() && m_imgui->HoveredIdTimer > .5f)
-            ImGui::SetTooltip("Display subd mesh wireframe");
+            ImGui::SetTooltip("Display subd cage");
 
-        ImGui::SameLine();
-
-        
-        ImGui::PushItemWidth(65);
-
+        // AO samples
         {
             int n = static_cast<int>( std::sqrt( renderer.getAOSamples() ) - 1 );
             if( ImGui::Combo( "AO samples", &n, " 1x\0 4x\0 9x\0 16x\0 25x\0 36x\0 49x\0 64x\0" ) )
@@ -541,7 +546,6 @@ void OptixSubdGUI::buildUI_internal( int2 window_size )
                 renderer.setAOSamples( (n+1) * (n+1) );
             }
         }
-        ImGui::PopItemWidth();
 
         int colorMode = (int)renderer.getColorMode();
         if( ImGui::Combo( "Color Mode", &colorMode,

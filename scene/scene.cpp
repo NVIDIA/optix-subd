@@ -346,6 +346,7 @@ class Scene::ModelLoader
             subd->m_aabbKeyframes.resize( nframes );
 
             subd->d_positionKeyframes[0].uploadAsync( subd->getShape()->verts );
+            subd->m_aabbKeyframes[0] = subd->getShape()->aabb;
 
             std::vector<int> frames(nframes - 1);  // excluding the 1st frame.
             std::iota( frames.begin(), frames.end(), 1 );

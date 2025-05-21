@@ -64,6 +64,7 @@ enum class ColorMode : uint8_t
 struct BoundValues
 {
     bool enableWireframe = false;
+    bool enableSurfaceWireframe = false;
 
     ColorMode colorMode = ColorMode::COLOR_BY_NORMAL;
 

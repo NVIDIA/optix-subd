@@ -140,7 +140,7 @@ struct IntersectionRecord
     float3 gn{ 0.f };            // world space geometry normal
     float2 texcoord{ 0.f };      // user-assigned texcoord from base mesh
     float3 barycentrics{ 0.f };  
-    float3 distToEdge{ 0.f };    // for wireframe
+    float wireframeMask { 1.0f };
     float  hitT{ std::numeric_limits<float>::infinity() };
 
     // Needed for AOVs
@@ -278,6 +278,12 @@ T bilerp( const T* values, float2 uv )
     return result;
 }
 
+__device__ inline float3 transformPointFromObjectToScreenSpace( const float3& v )
+{
+    float3 vw = optixTransformPointFromObjectToWorldSpace( v );
+    float4 s = params.viewProjectionMatrix * make_float4( vw.x, vw.y, vw.z, 1.f );
+    return make_float3( s.x / s.w, s.y / s.w, s.z / s.w );
+}
 
 __device__ inline 
 IntersectionRecord makeIntersectionRecord()
@@ -292,29 +298,69 @@ IntersectionRecord makeIntersectionRecord()
     float3 v[3];
     optixGetTriangleVertexData( v );
 
-    if( params.bound.enableWireframe )
+    if( params.bound.enableWireframe || params.bound.enableSurfaceWireframe )
     {
-        // Ad-hoc wireframe shading that tries to stay roughly constant width in screen space
-        float3 v0 = optixTransformPointFromObjectToWorldSpace( v[0] );
-        float3 v1 = optixTransformPointFromObjectToWorldSpace( v[1] );
-        float3 v2 = optixTransformPointFromObjectToWorldSpace( v[2] );
+        // Build a wireframe mask that is roughly constant width in screen space
 
-        const float4 s0 = params.viewProjectionMatrix * make_float4( v0.x, v0.y, v0.z, 1.f );
-        const float4 s1 = params.viewProjectionMatrix * make_float4( v1.x, v1.y, v1.z, 1.f );
-        const float4 s2 = params.viewProjectionMatrix * make_float4( v2.x, v2.y, v2.z, 1.f );
+        float3 v0 = transformPointFromObjectToScreenSpace( v[0] );
+        float3 v1 = transformPointFromObjectToScreenSpace( v[1] );
+        float3 v2 = transformPointFromObjectToScreenSpace( v[2] );
+        
+        constexpr float  thickness  = 5e-4f;
+        constexpr float  smoothness = 5e-5f;
+        
+        ir.wireframeMask = 1.f;
 
-        v0 = make_float3( s0 / s0.w );
-        v1 = make_float3( s1 / s1.w );
-        v2 = make_float3( s2 / s2.w );
+        if ( params.bound.enableWireframe )
+        {
+            // Wireframe for triangles
 
-        const float3 e_01 = ( v0 - v1 );
-        const float3 e_12 = ( v1 - v2 );
-        const float3 e_20 = ( v2 - v0 );
+            // Clamp line width in barycentric space to avoid overly thick lines for far away triangles
+            constexpr float maxParametricWidth = 0.1f;
+            if( ir.barycentrics.x < maxParametricWidth || ir.barycentrics.y < maxParametricWidth || ir.barycentrics.z < maxParametricWidth )
+            {
+                // Compute distance to edges in screen space
+                float  area = 0.5f * length( cross( v1-v0, v2-v0 ) );
+                float3 invEdgeLengths = { 1.0f / length( v2-v1 ), 1.0f / length( v2-v0 ), 1.0f / length( v1-v0 ) };
+                float3 distToEdge = 2.0f * ir.barycentrics * area * invEdgeLengths;
 
-        float area = .5f * length( cross( e_01, e_20 ) );
-        ir.distToEdge.x   = 2.f * ir.barycentrics.x * area / length( e_12 );
-        ir.distToEdge.y   = 2.f * ir.barycentrics.y * area / length( e_20 );
-        ir.distToEdge.z   = 2.f * ir.barycentrics.z * area / length( e_01 );
+                const float minDist = fminf( distToEdge.x, fminf( distToEdge.y, distToEdge.z ) );
+                ir.wireframeMask *= smoothstep( thickness, thickness + smoothness, minDist );
+            }
+        }
+
+        if ( params.bound.enableSurfaceWireframe )
+        {
+            // Wireframe for parametric surface patch 
+           
+            float2 U[3];
+            getSurfaceUV( primIdx, U );
+            const float2 uv = ir.barycentrics.x * U[0] + ir.barycentrics.y * U[1] + ir.barycentrics.z * U[2];
+            const float  du = fminf( uv.x, 1 - uv.x );
+            const float  dv = fminf( uv.y, 1 - uv.y );
+
+            // Build the 2x2 matrices Ep = [P1-P0, P2-P0] and Eu = [U1-U0, U2-U0]
+            otk::Matrix2x2 Ep = otk::Matrix2x2( { v1.x - v0.x, v2.x - v0.x, v1.y - v0.y, v2.y - v0.y } );
+            otk::Matrix2x2 Eu = otk::Matrix2x2( { U[1].x - U[0].x, U[2].x - U[0].x, U[1].y - U[0].y, U[2].y - U[0].y } );
+
+            constexpr float maxParametricWidth = 0.1f;
+            if( fabsf( Eu.det() ) > 1e-7f && ( du < maxParametricWidth || dv < maxParametricWidth ) )
+            {
+                otk::Matrix2x2 Eu_inv = Eu.inverse();
+
+                // Solve for J = Ep * Eu^(-1) = [dPdu, dPdv]
+                otk::Matrix2x2 J = Ep * Eu_inv;
+
+                float2 dPdu = J.getCol( 0 );
+                float2 dPdv = J.getCol( 1 );
+
+                // Compute distance from uv to closest edge in screen space
+                float2 distToEdge = { length( dPdu * du ), length( dPdv * dv ) };
+                float  minDist    = fminf( distToEdge.x, distToEdge.y );
+
+                ir.wireframeMask *= smoothstep( 1.5f*thickness, 1.5f*thickness + smoothness, minDist );
+            }
+        }
     }
 
     float worldOffset = 0.f;
@@ -454,16 +500,6 @@ float occlusion( OptixTraversableHandle handle, float3 rayOrigin, float3 rayDire
 
 
 __device__ inline 
-float wireframeWeight( const IntersectionRecord ir )
-{
-    constexpr float  thickness  = 1e-5f;
-    constexpr float  smoothness = 1e-7f;
-    const float3 b          = ir.barycentrics * ir.distToEdge;
-    const float  minBary    = fminf( b.x, fminf( b.y, b.z ) );
-    return smoothstep( thickness, thickness + smoothness, minBary );
-}
-
-__device__ inline 
 float3 aoSample( const float3 normal, const float2 u )
 {
     const Onb onb{ normal };
@@ -479,11 +515,6 @@ __global__ void __closesthit__radiance()
     
     const IntersectionRecord ir = makeIntersectionRecord();
     float3 pathWeight = make_float3(1.f); 
-
-    if( params.bound.enableWireframe )
-    {
-        pathWeight *= wireframeWeight( ir );
-    }
 
     const uint2 idx = make_uint2( optixGetLaunchIndex() );
 
@@ -501,7 +532,7 @@ __global__ void __closesthit__radiance()
             occl += occlusion( params.handle, ir.p, L );
         }
         occl /= params.aoSamples;
-        pathWeight *= baseColor * ( 1.0f - occl );
+        pathWeight *= baseColor * ( 1.0f - occl ) * ir.wireframeMask;
 
         optixSetPayload_0( __float_as_uint( pathWeight.x ) );
         optixSetPayload_1( __float_as_uint( pathWeight.y ) );

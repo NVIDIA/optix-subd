@@ -294,6 +294,13 @@ void OptixRenderer::setWireframe(bool wireframe)
     m_pipelinesNeedsUpdate |= (wireframe != m_params.bound.enableWireframe);
     m_params.bound.enableWireframe = wireframe;
     resetSubframes();
+}   
+
+void OptixRenderer::setSurfaceWireframe(bool wireframe)
+{
+    m_pipelinesNeedsUpdate |= (wireframe != m_params.bound.enableSurfaceWireframe);
+    m_params.bound.enableSurfaceWireframe = wireframe;
+    resetSubframes();
 }
 
 void OptixRenderer::setDisplayChannel( GBuffer::Channel channel )

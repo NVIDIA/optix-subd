@@ -616,6 +616,14 @@ namespace otk
 
   // Returns the determinant of the matrix.
   template<>
+  OTK_INLINE OTK_HOSTDEVICE float Matrix<2,2>::det() const
+  {
+    const float* m = m_data;
+    float d = m[0]*m[3] - m[1]*m[2];
+    return d;
+  }
+
+  template<>
   OTK_INLINE OTK_HOSTDEVICE float Matrix<3,3>::det() const
   {
     const float* m   = m_data;
@@ -624,7 +632,6 @@ namespace otk
     return d;
   }
 
-  // Returns the determinant of the matrix.
   template<>
   OTK_INLINE OTK_HOSTDEVICE float Matrix<4,4>::det() const
   {
@@ -696,6 +703,14 @@ namespace otk
   }
 
   // Returns the inverse of the matrix.
+
+  template<>
+  OTK_INLINE OTK_HOSTDEVICE Matrix<2,2> Matrix<2,2>::inverse() const
+  {
+    float d = 1.0f / det();
+    return Matrix<2,2>( { m_data[3], -m_data[1], -m_data[2], m_data[0] } ) * d;
+  }
+
   template<>
   OTK_INLINE OTK_HOSTDEVICE Matrix<3,3> Matrix<3,3>::inverse() const
   {
