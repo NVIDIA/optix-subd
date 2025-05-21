@@ -38,4 +38,4 @@ add_library(material OBJECT ${MATERIAL_SRC})
 target_include_directories(material PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(material subdivision OptiXToolkit::ShaderUtil OptiXToolkit::Util)
 
-target_compile_options( material PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
+#target_compile_options( material PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )

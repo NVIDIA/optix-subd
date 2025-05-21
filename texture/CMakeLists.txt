@@ -54,4 +54,4 @@ target_include_directories(texture PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(texture OptiXToolkit::ShaderUtil OptiXToolkit::Util)
 
 
-target_compile_options( texture PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
+#target_compile_options( texture PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )

@@ -44,7 +44,7 @@ add_library(subdivision STATIC
 
 target_link_libraries(subdivision PUBLIC osd_lite_static OptiXToolkit::ShaderUtil OptiXToolkit::Util)
 
-target_compile_options( subdivision PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
+#target_compile_options( subdivision PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
 
 set_target_properties( subdivision PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 set_target_properties( subdivision PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON )

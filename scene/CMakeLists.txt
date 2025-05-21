@@ -54,4 +54,4 @@ target_link_libraries(scene
     subdivision
     )
 
-target_compile_options(scene PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>")
+#target_compile_options(scene PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>")

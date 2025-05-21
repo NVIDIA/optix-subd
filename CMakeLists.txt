@@ -120,7 +120,12 @@ add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>)
 add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
 add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>)
 
-add_compile_options($<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>)
+# Full kernel debug info (-G) has a big performance cost, keep it off for now.  It can also be 
+# enabled for single targets in the CMakeLists files in subdirs.
+
+#add_compile_options($<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>)
+add_compile_options($<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-lineinfo>)
+
 add_compile_options($<$<AND:$<CONFIG:Release>,$<COMPILE_LANGUAGE:CUDA>>:-lineinfo>)
 
 
@@ -325,6 +330,7 @@ add_custom_target(update_buildstamp
     COMMAND ${CMAKE_COMMAND}
         -DSOURCE=${CMAKE_SOURCE_DIR}/version.h.in
         -DTARGET=${CMAKE_CURRENT_BINARY_DIR}/ocb_version.h
+        -DPROJECT_CONFIG=$<CONFIG>
         -P "${CMAKE_SOURCE_DIR}/CMake/build_stamp.cmake"
     VERBATIM
 )

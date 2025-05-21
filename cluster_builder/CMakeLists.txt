@@ -45,7 +45,7 @@ add_library(cluster_builder OBJECT ${CLUSTER_BUILDER_SRC})
 
 target_link_libraries(cluster_builder PRIVATE subdivision OptiXToolkit::Util OptiXToolkit::ShaderUtil OptiXToolkit::Gui)
 
-target_compile_options( cluster_builder PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
+#target_compile_options( cluster_builder PRIVATE "$<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CUDA>>:-G>" )
 
 target_include_directories( cluster_builder
   PRIVATE

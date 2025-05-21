@@ -66,6 +66,6 @@ template<class T, size_t N> c_array<T, N> const& as_c_array( std::array<T, N> co
     return reinterpret_cast<T const(&)[N]>( *a.data() );
 }
 
-constexpr auto _windowName = concat( "OptixSubd ", git_branch, " ", git_commit, " (", build_date, ")" );
+constexpr auto _windowName = concat( "OptixSubd ", git_branch, " ", git_commit, " (", build_date, ") - ", build_config );
 
 char const* windowName = as_c_array( _windowName );
