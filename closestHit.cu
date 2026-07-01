@@ -621,7 +621,7 @@ __global__ void __closesthit__radiance()
         gbuffer::write( depth, params.aovDepth, idx );
 
         gbuffer::write( make_float4( ir.n, 1.f ), params.aovNormals, idx );
-        gbuffer::write( make_float4( baseColor, 1.f ), params.aovAlbedo, idx );
+        gbuffer::write( make_float4( diffuseColor, 1.f ), params.aovAlbedo, idx );
         gbuffer::write( make_float4( specularColor, 1.f ), params.aovSpecular, idx );
         gbuffer::write( roughness, params.aovRoughness, idx );
 
