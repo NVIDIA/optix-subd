@@ -116,6 +116,29 @@ static std::string getSequenceFormat( const std::string& str, int2 frameRange )
     return str;
 }
 
+// Fills the single printf integer field of a sequence path template (e.g. "%d",
+// "%03d") with a frame index, zero-padded to the parsed field width via "%0*d".
+static std::string formatFrameNumber( const std::string& templ, int frame )
+{
+    size_t pct = templ.find( '%' );
+    if( pct == std::string::npos )
+        return templ;
+
+    const char* begin = templ.data() + pct + 1;
+    const char* end   = templ.data() + templ.size();
+
+    int width = 0;
+    const char* next = std::from_chars( begin, end, width ).ptr;
+
+    if( next < end && *next == 'd' )
+    {
+        char field[32];
+        std::snprintf( field, std::size( field ), "%0*d", width, frame );
+        return templ.substr( 0, pct ) + field + std::string( next + 1, end );
+    }
+    return templ;
+}
+
 static fs::path resolveMediapath( const fs::path& filepath, const fs::path& mediapath )
 {
     if( filepath.empty() )
@@ -312,9 +335,8 @@ class Scene::ModelLoader
                     shape = Shape::loadObjFile( filepath.generic_string() );
                 else
                 {
-                    char buf[1024];
-                    std::snprintf( buf, std::size( buf ), filepath.generic_string().c_str(), frameRange.x );
-                    shape = Shape::loadObjFile( buf );
+                    std::string path = formatFrameNumber( filepath.generic_string(), frameRange.x );
+                    shape = Shape::loadObjFile( path );
                 }
 
                 if ( shape->uvs.empty() || shape->faceuvs.empty() )
@@ -341,10 +363,9 @@ class Scene::ModelLoader
 
             std::for_each( std::execution::par_unseq, frames.begin(), frames.end(), [&]( int frame ) {
                         
-                char buf[1024];
-                std::snprintf( buf, 1024, filepath.generic_string().c_str(), frame + frameRange.x );
+                std::string path = formatFrameNumber( filepath.generic_string(), frame + frameRange.x );
 
-                std::unique_ptr<Shape> s = Shape::loadObjFile( buf, false );
+                std::unique_ptr<Shape> s = Shape::loadObjFile( path, false );
 
                 subd->d_positionKeyframes[frame].uploadAsync( s ? s->verts : subd->getShape()->verts );
 

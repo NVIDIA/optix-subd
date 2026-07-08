@@ -108,7 +108,7 @@ static std::vector<std::unique_ptr<Shape::material>> parseMtllib( char const* mt
             case 'n':
             {
                 char name[256] = {""};
-                if( sscanf( line, "newmtl %s", name ) == 1 )
+                if( sscanf( line, "newmtl %255s", name ) == 1 )
                 {
                     mtl       = mtls.emplace_back( std::make_unique<Shape::material>() ).get();
                     mtl->name = name;
@@ -372,17 +372,18 @@ std::unique_ptr<Shape> parseObj( char const* filepath, Scheme shapescheme, bool 
             case 'g':
                 if( line[1] == ' ' )
                 {
-                    sscanf( line, "g %s", groupName );
+                    sscanf( line, "g %511s", groupName );
                     faceId = 0;
                 }
+                break;
             case 'u':
-                if( parsemtl && sscanf( line, "usemtl %s", buf ) == 1 )
+                if( parsemtl && sscanf( line, "usemtl %255s", buf ) == 1 )
                 {
                     usemtl = static_cast<short>( s->findMaterial( buf ) );
                 }
                 break;
             case 'm':
-                if( parsemtl && sscanf( line, "mtllib %s", buf ) == 1 )
+                if( parsemtl && sscanf( line, "mtllib %255s", buf ) == 1 )
                 {
                     fs::path p = buf;
                     if( ! fs::is_regular_file( p ) )
@@ -395,13 +396,13 @@ std::unique_ptr<Shape> parseObj( char const* filepath, Scheme shapescheme, bool 
                 }
                 break;
             case 'c':
-                if( parsemtl && sscanf( line, "capslib %s", buf ) == 1 )
+                if( parsemtl && sscanf( line, "capslib %255s", buf ) == 1 )
                 {
                     // ignore
                 }
                 break;
             case 'o':  // check for lfs-standin files
-                if( sscanf( line, "oid sha256:%s", buf ) == 1 )
+                if( sscanf( line, "oid sha256:%255s", buf ) == 1 )
                 {
                     return nullptr;
                 }
@@ -466,7 +467,7 @@ bool Shape::tag::parseTag( char const* line, tag* t )
         char val[512];
         while( *cp == ' ' )
             cp++;
-        if( sscanf( cp, "%512s", val ) != 1 )
+        if( sscanf( cp, "%511s", val ) != 1 )
             return false;
         t->stringargs.push_back( std::string( val ) );
         while( *cp && *cp != ' ' )
