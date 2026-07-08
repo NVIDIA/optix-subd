@@ -442,8 +442,13 @@ void readDDSFile( Texture& tex, const std::string& filepath )
     for( uint32_t i = 0; i < nmipmaps && width != 0; ++i )
     {
         cudaPitchedPtr& mip = tex.m_mipmaps[i];
-        
+
         mip = makeCudaPitchedPtr( *mapping, ptr, width, height );
+
+        // verify the mip's pixel data fits in the remaining buffer (division avoids pitch*ysize overflow)
+        size_t avail = size_t( ( data.get() + size ) - ptr );
+        if( mip.ysize != 0 && mip.pitch > avail / mip.ysize )
+            throw std::runtime_error( "truncated DDS pixel data '" + filepath + "'" );
 
         ptr += mip.pitch * mip.ysize;
 

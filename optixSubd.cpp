@@ -438,7 +438,7 @@ int main( int argc, char* argv[] )
     }
     catch( std::exception& e )
     {
-        fatalError( e.what() ) ;
+        fatalError( "%s", e.what() ) ;
     }
     return 0;
 }
