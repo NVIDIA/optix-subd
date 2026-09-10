@@ -51,6 +51,7 @@
 #include <thrust/transform_reduce.h>
 #include <thrust/transform_scan.h>
 #include <thrust/transform.h>
+#include <thrust/tuple.h>
 #include "utils.cuh"
 // clang-format on
 

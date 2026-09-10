@@ -104,7 +104,10 @@ include(GNUInstallDirs)
 # Warning and error definitions
 
 if(MSVC)
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/we4099>)  # mixing struct/class forward decl
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/we4099>  # mixing struct/class forward decl
+        $<$<COMPILE_LANGUAGE:CXX>:/Zc:preprocessor>
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>
+    )
 else()
     # Ignore warnings from some third party headers by including them with -isystem
     include_directories(SYSTEM
